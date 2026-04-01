@@ -105,7 +105,7 @@ async def test_select_antecedent_fallback_path() -> None:
         ]
     )
     router = OpenAILanguageModelRouter(client=client)
-    candidates = [AntecedentOption(antecedente_id=1, texto="CI", source_regla_id=10)]
+    candidates = [AntecedentOption(antecedente_id=1, source_regla_id=10, texto="CI")]
 
     result = await router.select_antecedent("texto", candidates)
     assert result.selected_index == 0
@@ -115,9 +115,9 @@ async def test_select_antecedent_fallback_path() -> None:
 async def test_select_antecedent_failure_defaults_controlled() -> None:
     client = FakeOpenAIClientService(responses=[None, None])
     router = OpenAILanguageModelRouter(client=client)
-    candidates = [AntecedentOption(antecedente_id=1, texto="CI", source_regla_id=10)]
+    candidates = [AntecedentOption(antecedente_id=1, source_regla_id=10, texto="CI")]
 
     result = await router.select_antecedent("texto", candidates)
-    assert result.selected_index == 0
+    assert result.selected_index is None
     assert result.model_path == "cheap->strong"
-    assert result.reason == "fallback_default_selection"
+    assert result.reason == "p3_parse_or_models_failed"

@@ -7,7 +7,7 @@ from app.application.ports.repositories import CatalogRepository
 from app.application.services.antecedent_resolver import AntecedentResolver
 from app.application.services.concatenation_engine import ConcatenationEngine
 from app.application.services.rule_resolver import RuleResolver
-from app.domain.models import AllowedTriple, GeneratedActuation, SubjectDocumentPair
+from app.domain.models import AllowedTriple, GeneratedActuation, RuleMatch, SubjectDocumentPair
 from app.interfaces.http.v2.schemas import ActuacionGeneradaDTO, AnalyzeAutoV2Request, AnalyzeAutoV2Response
 
 logger = logging.getLogger(__name__)
@@ -189,27 +189,45 @@ class AnalyzeAutoUseCase:
                 selection_confidence = choice.confidence
                 ci_text = ""
                 antecedente_id = None
+                candidates_count = 0
+                truncated_flag = False
+                p3_invocado = False
+                antecedente_search_skipped = False
             else:
-                candidates = self._antecedent_resolver.resolve(
+                antecedente_search_skipped = not self._antecedent_search_defined(top_rule)
+                candidates, truncated_flag = self._antecedent_resolver.resolve(
                     proceso_id=request.proceso_id,
+                    actuacion_fuente_id=request.actuacion_fuente_id,
                     rule=top_rule,
+                    reference_date=request.fecha_ocurrencia_referencia,
                 )
+                candidates_count = len(candidates)
                 selection_text = f"{document_context_line}\n{span.texto_literal}"
-                selection = await self._language_model.select_antecedent(selection_text, candidates)
-
                 selected = None
-                if selection.selected_index is not None and 0 <= selection.selected_index < len(candidates):
-                    selected = candidates[selection.selected_index]
-                elif candidates:
+                p3_invocado = False
+                if candidates_count == 0:
+                    selection_model_path = "no_antecedent_candidates"
+                    selection_reason = "candidatos_antecedente=0"
+                    selection_confidence = choice.confidence
+                elif candidates_count == 1:
+                    selection_model_path = "p3_skipped_single_candidate"
+                    selection_reason = "unico_candidato"
+                    selection_confidence = choice.confidence
                     selected = candidates[0]
+                else:
+                    p3_invocado = True
+                    selection = await self._language_model.select_antecedent(selection_text, candidates)
+                    selection_model_path = selection.model_path
+                    selection_reason = selection.reason
+                    selection_confidence = selection.confidence
+                    if selection.selected_index is not None and 0 <= selection.selected_index < len(candidates):
+                        selected = candidates[selection.selected_index]
 
                 ci_text, antecedente_id = self._concatenation_engine.build(
                     rule=top_rule,
                     selected_option=selected,
+                    complemento_directo_id_actual=triple.id_complemento_directo,
                 )
-                selection_model_path = selection.model_path
-                selection_reason = selection.reason
-                selection_confidence = selection.confidence
             texto_final = self._build_texto_final_svp(
                 sujeto_nombre=selected_pair.sujeto_nombre,
                 tipo_documento_nombre=selected_pair.tipo_documento_nombre,
@@ -232,6 +250,11 @@ class AnalyzeAutoUseCase:
                 "pattern_code": top_rule.pattern_code if top_rule else None,
                 "section_used": extracted.section_used,
                 "rule_fallback": top_rule is None,
+                "candidatos_antecedente": candidates_count if top_rule else 0,
+                "p3_invocado": p3_invocado if top_rule else False,
+                "antecedente_search_skipped": antecedente_search_skipped if top_rule else False,
+                "filtro_fecha_aplicado": request.fecha_ocurrencia_referencia is not None,
+                "candidatos_truncados": truncated_flag if top_rule else False,
             }
 
             generated = GeneratedActuation(
@@ -277,6 +300,17 @@ class AnalyzeAutoUseCase:
             actuaciones_generadas=actuaciones,
             errores=errores,
             sin_clasificar=sin_clasificar,
+        )
+
+    @staticmethod
+    def _antecedent_search_defined(rule: RuleMatch) -> bool:
+        return any(
+            [
+                rule.id_buscar_antecedente_verbo,
+                rule.id_buscar_antecedente_tipo_documento,
+                rule.id_buscar_antecedente_complemento_directo,
+                rule.buscar_antecedente_por_complemento_texto,
+            ]
         )
 
     @staticmethod

@@ -32,6 +32,14 @@ class Settings(BaseSettings):
 
     auto_section_strategy: str = Field(default="resuelve_only")
     max_candidates: int = Field(default=5)
+    max_antecedent_candidates: int = Field(
+        default=10,
+        description="Tope de filas candidatas a antecedente (public.actuacion).",
+    )
+    judicial_actuacion_table: str = Field(
+        default="public.actuacion",
+        description="Tabla cualificada de actuaciones en recu-judicial.",
+    )
 
     # Bloques JSON indentados en consola (ademas del logger)
     ia_console_pretty: bool = Field(default=True)

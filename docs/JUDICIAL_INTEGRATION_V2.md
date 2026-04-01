@@ -14,9 +14,13 @@ Migrar de contrato legado (`/analyze`) a contrato v2 (`/v2/analyze-auto`) con ro
   "actuacion_fuente_id": 456,
   "url_auto": "https://storage/.../auto.pdf",
   "modo": "preview",
-  "frases_contexto": []
+  "frases_contexto": [],
+  "fecha_ocurrencia_referencia": "2026-03-17"
 }
 ```
+
+- `fecha_ocurrencia_referencia` (opcional, `date`): si judicial la envia, el microservicio filtra candidatos a antecedente con `fecha_ocurrencia` nula o menor o igual a esa fecha. Si se omite, no se aplica filtro temporal.
+- `actuacion_fuente_id`: id de `public.actuacion` que se esta analizando; se excluye de la busqueda de antecedentes.
 
 ### Response
 
@@ -37,8 +41,13 @@ Migrar de contrato legado (`/analyze`) a contrato v2 (`/v2/analyze-auto`) con ro
       "estado": "clasificada_con_regla",
       "confianza_ia": 0.83,
       "trace": {
-        "model_path": "cheap",
-        "rule_id": 80
+        "model_path": "p3_skipped_single_candidate",
+        "rule_id": 80,
+        "candidatos_antecedente": 1,
+        "p3_invocado": false,
+        "antecedente_search_skipped": false,
+        "filtro_fecha_aplicado": true,
+        "candidatos_truncados": false
       }
     }
   ],
@@ -56,10 +65,20 @@ Migrar de contrato legado (`/analyze`) a contrato v2 (`/v2/analyze-auto`) con ro
 
 ## Cambios requeridos en recu-judicial
 
-- Actualizar cliente de microservicio para enviar `url_auto` y `actuacion_fuente_id`.
-- Mapear `actuaciones_generadas[]` a insercion/actualizacion de actuaciones.
+- Actualizar cliente de microservicio para enviar `url_auto`, `actuacion_fuente_id` y, cuando exista, `fecha_ocurrencia_referencia` (fecha de ocurrencia de la actuacion analizada).
+- Mapear `actuaciones_generadas[]` a insercion/actualizacion de `public.actuacion` al persistir (commit): al menos `id_sujeto`, textos/IDs de tipo documento, verbo, complemento directo, `id_regla`, `id_antecedente`, `complemento_indirecto`, `frase_concatenada` desde `texto_final`, `analisis_svp` si aplica.
 - Guardar trazabilidad (`trace`) para auditoria funcional.
 - Aplicar retries idempotentes por `actuacion_fuente_id`.
+
+### Mapper sugerido (DTO -> `Actuacion`)
+
+| Campo respuesta v2 | Columna judicial (referencia) |
+|--------------------|-------------------------------|
+| `texto_final` | `frase_concatenada` |
+| `id_regla` | `id_regla` |
+| `antecedente_id` | `id_antecedente` |
+| `complemento_indirecto_text` | `complemento_indirecto` |
+| `id_sujeto`, `id_tipo_documento`, `id_verbo`, `id_complemento_directo` | homonimos + columnas de texto enriquecido si aplica |
 
 ## Conexion a base de datos (decision)
 
@@ -68,7 +87,9 @@ en modo **read-only** para consultar:
 
 - reglas del schema `svp`,
 - catalogos (`tipos_*`, conectores, patrones),
-- actuaciones previas para seleccionar antecedente.
+- actuaciones previas en `public.actuacion` (mismo `id_proceso` que `proceso_id` del request) para seleccionar antecedente segun criterios de `svp.reglas_gramaticales_encadenamiento` y patron `svp.patrones_concatenacion.codigo`.
+
+Variables de entorno relacionadas (ver `.env` / `config.py`): `judicial_actuacion_table` (por defecto `public.actuacion`), `max_antecedent_candidates` (por defecto 10, tope de candidatos devueltos antes de P3).
 
 Justificacion:
 

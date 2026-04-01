@@ -1,5 +1,6 @@
 from app.application.services.antecedent_resolver import AntecedentResolver
 from app.application.services.concatenation_engine import ConcatenationEngine
+from app.application.services.pattern_fragment_builder import PatternFragmentBuilder
 from app.application.services.rule_resolver import RuleResolver
 from app.application.use_cases.analyze_auto_use_case import AnalyzeAutoUseCase
 from app.infrastructure.ai.openai_router import OpenAILanguageModelRouter
@@ -24,5 +25,5 @@ def build_analyze_auto_use_case() -> AnalyzeAutoUseCase:
         catalog_repository=catalog_repository,
         rule_resolver=RuleResolver(rule_repository),
         antecedent_resolver=AntecedentResolver(actuacion_repository),
-        concatenation_engine=ConcatenationEngine(),
+        concatenation_engine=ConcatenationEngine(pattern_builder=PatternFragmentBuilder()),
     )

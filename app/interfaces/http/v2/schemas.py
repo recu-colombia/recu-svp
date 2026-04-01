@@ -1,3 +1,4 @@
+from datetime import date
 from typing import Literal
 
 from pydantic import BaseModel, Field
@@ -9,6 +10,7 @@ class AnalyzeAutoV2Request(BaseModel):
     url_auto: str
     modo: Literal["preview", "commit"] = "preview"
     frases_contexto: list[str] = Field(default_factory=list)
+    fecha_ocurrencia_referencia: date | None = None
 
 
 class ActuacionGeneradaDTO(BaseModel):

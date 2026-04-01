@@ -1,3 +1,4 @@
+from datetime import date
 from typing import Protocol
 
 from app.domain.models import AllowedTriple, AntecedentOption, RuleMatch, SubjectDocumentPair
@@ -18,8 +19,11 @@ class ActuacionRepository(Protocol):
         self,
         *,
         proceso_id: int,
+        actuacion_fuente_id: int,
         rule: RuleMatch,
-    ) -> list[AntecedentOption]: ...
+        reference_date: date | None,
+    ) -> tuple[list[AntecedentOption], bool]:
+        """Retorna (candidatos, truncados_por_tope)."""
 
 
 class CatalogRepository(Protocol):

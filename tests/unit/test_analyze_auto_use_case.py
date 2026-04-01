@@ -46,7 +46,7 @@ class OkRuleRepository:
 class EmptyActRepo:
     def find_antecedent_candidates(self, **kwargs):  # noqa: ANN003
         _ = kwargs
-        return []
+        return [], False
 
 
 class EmptyCatalogRepository:

@@ -26,6 +26,29 @@ from app.infrastructure.ai.validators import (
 logger = logging.getLogger(__name__)
 
 
+def _antecedent_candidate_payload(index: int, c: AntecedentOption) -> dict[str, object]:
+    if c.texto and not any(
+        [c.verbo, c.tipo_documento, c.complemento_directo, c.complemento_indirecto]
+    ):
+        summary = c.texto.strip()
+    else:
+        parts: list[str] = []
+        if c.antecedente_id is not None:
+            parts.append(f"id={c.antecedente_id}")
+        if c.fecha_ocurrencia:
+            parts.append(str(c.fecha_ocurrencia))
+        if c.tipo_documento:
+            parts.append(str(c.tipo_documento))
+        if c.verbo:
+            parts.append(str(c.verbo))
+        if c.complemento_directo:
+            parts.append(str(c.complemento_directo)[:400])
+        if c.complemento_indirecto:
+            parts.append(str(c.complemento_indirecto)[:400])
+        summary = " | ".join(parts) if parts else str(c.antecedente_id)
+    return {"index": index, "antecedente_id": c.antecedente_id, "resumen": summary}
+
+
 class OpenAILanguageModelRouter(LanguageModel):
     """P1: modelo fuerte primero, barato como respaldo. P2 y seleccion: barato -> fuerte."""
 
@@ -202,10 +225,7 @@ class OpenAILanguageModelRouter(LanguageModel):
                 reason="no_candidates",
             )
 
-        compact_candidates = [
-            {"index": i, "texto": c.texto, "antecedente_id": c.antecedente_id}
-            for i, c in enumerate(candidates)
-        ]
+        compact_candidates = [_antecedent_candidate_payload(i, c) for i, c in enumerate(candidates)]
         messages = [
             {"role": "system", "content": SELECTION_SYSTEM_PROMPT},
             {
@@ -255,8 +275,8 @@ class OpenAILanguageModelRouter(LanguageModel):
             logger.warning("Modelo strong no devolvio respuesta para seleccion.")
 
         return SelectionResult(
-            selected_index=0,
+            selected_index=None,
             confidence=0.0,
             model_path="cheap->strong",
-            reason="fallback_default_selection",
+            reason="p3_parse_or_models_failed",
         )
