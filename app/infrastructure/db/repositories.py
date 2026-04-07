@@ -4,7 +4,11 @@ from datetime import date
 from sqlalchemy import text
 from sqlalchemy.engine import Engine
 
-from app.application.ports.repositories import ActuacionRepository, CatalogRepository, RuleRepository
+from app.application.ports.repositories import (
+    ActuacionRepository,
+    CatalogRepository,
+    RuleRepository,
+)
 from app.config import get_settings
 from app.domain.models import (
     AllowedTriple,
@@ -336,9 +340,14 @@ class PostgresCatalogRepository(CatalogRepository):
             for i, row in enumerate(rows)
         ]
 
-    def get_complemento_directo_ci_flags(self, id_complemento_directo: int) -> ComplementoDirectoCiFlags:
+    def get_complemento_directo_ci_flags(
+        self, id_complemento_directo: int
+    ) -> ComplementoDirectoCiFlags:
         if id_complemento_directo is None or id_complemento_directo < 0:
-            return ComplementoDirectoCiFlags(permite_texto_abierto_complemento_indirecto=False, conector_id=None)
+            return ComplementoDirectoCiFlags(
+                permite_texto_abierto_complemento_indirecto=False,
+                conector_id=None,
+            )
         # Solo la columna usada por el merge CI; `conector_id` no está en todos los esquemas
         # desplegados (recu-terminos/grammar_engine sí la consulta en instalaciones nuevas).
         query = text(
@@ -361,7 +370,10 @@ class PostgresCatalogRepository(CatalogRepository):
                     conector_id=None,
                 )
         if not row:
-            return ComplementoDirectoCiFlags(permite_texto_abierto_complemento_indirecto=False, conector_id=None)
+            return ComplementoDirectoCiFlags(
+                permite_texto_abierto_complemento_indirecto=False,
+                conector_id=None,
+            )
         permite = bool(row.get("permite_texto_abierto_complemento_indirecto", False))
         return ComplementoDirectoCiFlags(
             permite_texto_abierto_complemento_indirecto=permite,

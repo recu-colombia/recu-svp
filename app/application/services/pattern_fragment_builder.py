@@ -33,7 +33,10 @@ def _cd_display(c: AntecedentOption) -> str:
 
 
 def _apply_rule_conector_prefix(conector: str | None, body: str) -> str:
-    """Evita duplicar el conector si el cuerpo ya lo incluye (paridad con ConcatenationEngine previo)."""
+    """Evita duplicar el conector si el cuerpo ya lo incluye.
+
+    Paridad con ConcatenationEngine previo.
+    """
     con = _strip(conector)
     b = _strip(body)
     if not con or not b:
@@ -94,7 +97,10 @@ class PatternFragmentBuilder:
         c: AntecedentOption,
         complemento_directo_id_actual: int | None,
     ) -> tuple[str, int | None]:
-        if complemento_directo_id_actual is not None and c.id_complemento_directo == complemento_directo_id_actual:
+        if (
+            complemento_directo_id_actual is not None
+            and c.id_complemento_directo == complemento_directo_id_actual
+        ):
             return "", c.antecedente_id
         cd = _cd_display(c)
         if not cd:
@@ -121,7 +127,9 @@ class PatternFragmentBuilder:
         out = _apply_rule_conector_prefix(rule.conector_text, inner)
         return out, c.antecedente_id
 
-    def _full_phrase(self, rule: RuleMatch, c: AntecedentOption) -> tuple[str, int | None]:  # noqa: ARG002
+    def _full_phrase(
+        self, rule: RuleMatch, c: AntecedentOption
+    ) -> tuple[str, int | None]:  # noqa: ARG002
         td = _strip(c.tipo_documento)
         v = _strip(c.verbo)
         cd = _cd_display(c)
@@ -136,7 +144,9 @@ class PatternFragmentBuilder:
             body = f"{body} {con_prev}".strip() if body else con_prev
         return (body, c.antecedente_id)
 
-    def _verb_cd_connector_ci(self, rule: RuleMatch, c: AntecedentOption) -> tuple[str, int | None]:  # noqa: ARG002
+    def _verb_cd_connector_ci(
+        self, rule: RuleMatch, c: AntecedentOption
+    ) -> tuple[str, int | None]:  # noqa: ARG002
         partes: list[str] = []
         if c.id_verbo:
             partes.append(_strip(c.verbo))

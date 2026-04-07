@@ -83,9 +83,13 @@ class OpenAILanguageModelRouter(LanguageModel):
             }
             for p in allowed_pairs
         ]
+        pairs_json = json.dumps(
+            {"allowed_subject_document_pairs": pairs_payload},
+            ensure_ascii=False,
+        )
         user_prompt = (
             "Clasifica el siguiente auto usando solo los pair_index permitidos.\n"
-            f"{json.dumps({'allowed_subject_document_pairs': pairs_payload}, ensure_ascii=False)}\n\n"
+            f"{pairs_json}\n\n"
             f"Texto del auto:\n{document_text}"
         )
         messages = [
@@ -213,9 +217,15 @@ class OpenAILanguageModelRouter(LanguageModel):
         return ()
 
     async def select_antecedent(
-        self, text: str, candidates: list[AntecedentOption]
+        self,
+        text: str,
+        candidates: list[AntecedentOption],
     ) -> SelectionResult:
-        logger.info("[antecedente] candidates=%s texto=%s", len(candidates), preview_for_log(text, max_len=500))
+        logger.info(
+            "[antecedente] candidates=%s texto=%s",
+            len(candidates),
+            preview_for_log(text, max_len=500),
+        )
         if not candidates:
             logger.warning("No hay candidatas para seleccion de antecedente.")
             return SelectionResult(
@@ -225,7 +235,9 @@ class OpenAILanguageModelRouter(LanguageModel):
                 reason="no_candidates",
             )
 
-        compact_candidates = [_antecedent_candidate_payload(i, c) for i, c in enumerate(candidates)]
+        compact_candidates = [
+            _antecedent_candidate_payload(i, c) for i, c in enumerate(candidates)
+        ]
         messages = [
             {"role": "system", "content": SELECTION_SYSTEM_PROMPT},
             {

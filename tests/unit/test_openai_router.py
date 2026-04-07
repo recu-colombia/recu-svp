@@ -77,7 +77,13 @@ async def test_classify_spans_cheap_then_strong() -> None:
     )
     router = OpenAILanguageModelRouter(client=client)
 
-    spans = (ActuacionSpanSpec(span_index=0, texto_literal="ORDENA notificar.", ordinal_resuelve="1"),)
+    spans = (
+        ActuacionSpanSpec(
+            span_index=0,
+            texto_literal="ORDENA notificar.",
+            ordinal_resuelve="1",
+        ),
+    )
     triples = [
         AllowedTriple(
             triple_index=0,

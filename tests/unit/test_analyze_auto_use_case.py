@@ -53,7 +53,9 @@ class EmptyCatalogRepository:
     def list_subject_document_pairs(self) -> list[SubjectDocumentPair]:
         return []
 
-    def list_allowed_triples(self, *, id_tipo_documento: int) -> list[AllowedTriple]:  # noqa: ARG002
+    def list_allowed_triples(
+        self, *, id_tipo_documento: int
+    ) -> list[AllowedTriple]:  # noqa: ARG002
         return []
 
 
@@ -69,7 +71,9 @@ class StubCatalogRepository:
             )
         ]
 
-    def list_allowed_triples(self, *, id_tipo_documento: int) -> list[AllowedTriple]:  # noqa: ARG002
+    def list_allowed_triples(
+        self, *, id_tipo_documento: int
+    ) -> list[AllowedTriple]:  # noqa: ARG002
         return [
             AllowedTriple(
                 triple_index=0,
@@ -97,7 +101,12 @@ class InvalidP1LanguageModel:
 
     async def select_antecedent(self, text, candidates):  # noqa: ANN001, ANN002
         _ = (text, candidates)
-        return SelectionResult(selected_index=None, confidence=0.0, model_path="cheap", reason="none")
+        return SelectionResult(
+            selected_index=None,
+            confidence=0.0,
+            model_path="cheap",
+            reason="none",
+        )
 
 
 class OkPipelineLanguageModel:
@@ -106,7 +115,11 @@ class OkPipelineLanguageModel:
         return DocumentClassificationResult(
             pair_index=0,
             actuacion_spans=(
-                ActuacionSpanSpec(span_index=0, texto_literal="ORDENA notificar la demanda.", ordinal_resuelve="1"),
+                ActuacionSpanSpec(
+                    span_index=0,
+                    texto_literal="ORDENA notificar la demanda.",
+                    ordinal_resuelve="1",
+                ),
             ),
             confidence=0.9,
             rationale="clear",

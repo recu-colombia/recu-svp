@@ -1,7 +1,6 @@
 import logging
 
 from app.application.ports.ai import DocumentClassificationResult, LanguageModel
-from app.logging_utils import preview_for_log
 from app.application.ports.documents import DocumentExtractor
 from app.application.ports.repositories import CatalogRepository
 from app.application.services.antecedent_resolver import AntecedentResolver
@@ -14,7 +13,12 @@ from app.domain.models import (
     RuleMatch,
     SubjectDocumentPair,
 )
-from app.interfaces.http.v2.schemas import ActuacionGeneradaDTO, AnalyzeAutoV2Request, AnalyzeAutoV2Response
+from app.interfaces.http.v2.schemas import (
+    ActuacionGeneradaDTO,
+    AnalyzeAutoV2Request,
+    AnalyzeAutoV2Response,
+)
+from app.logging_utils import preview_for_log
 
 logger = logging.getLogger(__name__)
 
@@ -50,7 +54,10 @@ class AnalyzeAutoUseCase:
         try:
             extracted = await self._document_extractor.extract_from_url(request.url_auto)
         except Exception as exc:
-            logger.exception("Fallo extraccion PDF para actuacion_fuente_id=%s", request.actuacion_fuente_id)
+            logger.exception(
+                "Fallo extraccion PDF para actuacion_fuente_id=%s",
+                request.actuacion_fuente_id,
+            )
             return AnalyzeAutoV2Response(
                 estado="error",
                 errores=[f"Error extrayendo PDF: {exc}"],
@@ -107,7 +114,10 @@ class AnalyzeAutoUseCase:
                 estado="partial",
                 errores=["pair_index de P1 no coincide con el catalogo."],
                 sin_clasificar=[
-                    {"motivo": "pair_index_invalido", "actuacion_fuente_id": request.actuacion_fuente_id}
+                    {
+                        "motivo": "pair_index_invalido",
+                        "actuacion_fuente_id": request.actuacion_fuente_id,
+                    }
                 ],
             )
 
@@ -121,7 +131,10 @@ class AnalyzeAutoUseCase:
             )
             return AnalyzeAutoV2Response(
                 estado="partial",
-                errores=["No hay relaciones verbo/complemento_directo para el tipo de documento elegido."],
+                errores=[
+                    "No hay relaciones verbo/complemento_directo para el tipo de "
+                    "documento elegido."
+                ],
                 sin_clasificar=[
                     {
                         "motivo": "universo_triples_vacio",
@@ -187,13 +200,16 @@ class AnalyzeAutoUseCase:
             top_rule = rules[0] if rules else None
             if not top_rule:
                 logger.warning(
-                    "Fallback sin encadenamiento para span=%s (verbo=%s, cd=%s): sin regla aplicable.",
+                    "Fallback sin encadenamiento para span=%s (verbo=%s, cd=%s): "
+                    "sin regla aplicable.",
                     span.span_index,
                     triple.id_verbo,
                     triple.id_complemento_directo,
                 )
                 errores.append(
-                    f"Sin regla para span {span.span_index} (verbo={triple.id_verbo}, cd={triple.id_complemento_directo}); aplicada actuacion base sin encadenamiento."
+                    f"Sin regla para span {span.span_index} (verbo={triple.id_verbo}, "
+                    f"cd={triple.id_complemento_directo}); "
+                    "aplicada actuacion base sin encadenamiento."
                 )
                 selection_model_path = "rule_fallback"
                 selection_reason = "sin_regla_aplicable"
@@ -227,11 +243,17 @@ class AnalyzeAutoUseCase:
                     selected = candidates[0]
                 else:
                     p3_invocado = True
-                    selection = await self._language_model.select_antecedent(selection_text, candidates)
+                    selection = await self._language_model.select_antecedent(
+                        selection_text,
+                        candidates,
+                    )
                     selection_model_path = selection.model_path
                     selection_reason = selection.reason
                     selection_confidence = selection.confidence
-                    if selection.selected_index is not None and 0 <= selection.selected_index < len(candidates):
+                    if (
+                        selection.selected_index is not None
+                        and 0 <= selection.selected_index < len(candidates)
+                    ):
                         selected = candidates[selection.selected_index]
 
                 ci_text, antecedente_id = self._concatenation_engine.build(
@@ -339,8 +361,10 @@ class AnalyzeAutoUseCase:
         if (ci_text or "").strip():
             return ci_text, False
         if id_complemento_directo not in ci_flags_cache:
-            ci_flags_cache[id_complemento_directo] = self._catalog_repository.get_complemento_directo_ci_flags(
-                id_complemento_directo
+            ci_flags_cache[id_complemento_directo] = (
+                self._catalog_repository.get_complemento_directo_ci_flags(
+                    id_complemento_directo
+                )
             )
         if not ci_flags_cache[id_complemento_directo].permite_texto_abierto_complemento_indirecto:
             return ci_text, False

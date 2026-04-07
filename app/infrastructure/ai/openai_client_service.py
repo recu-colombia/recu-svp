@@ -1,8 +1,8 @@
 """Servicio de comunicacion con OpenAI (estilo legacy)."""
 
+import importlib
 import logging
 from typing import Any
-import importlib
 
 from app.config import get_settings
 from app.infrastructure.ai.console_pretty import print_ia_request_block, print_ia_response_block
@@ -94,7 +94,5 @@ class OpenAIClientService:
         for msg in messages:
             role = (msg.get("role") or "?").strip()
             raw = msg.get("content") or ""
-            compact_parts.append(
-                f"{role}[len={len(raw)}]={preview_for_log(raw, max_len=450)}"
-            )
+            compact_parts.append(f"{role}[len={len(raw)}]={preview_for_log(raw, max_len=450)}")
         return " || ".join(compact_parts)
