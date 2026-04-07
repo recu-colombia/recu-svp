@@ -9,7 +9,12 @@ from app.application.services.antecedent_resolver import AntecedentResolver
 from app.application.services.concatenation_engine import ConcatenationEngine
 from app.application.services.rule_resolver import RuleResolver
 from app.application.use_cases.analyze_auto_use_case import AnalyzeAutoUseCase
-from app.domain.models import AllowedTriple, ComplementoDirectoCiFlags, RuleMatch, SubjectDocumentPair
+from app.domain.models import (
+    AllowedTriple,
+    ComplementoDirectoCiFlags,
+    RuleMatch,
+    SubjectDocumentPair,
+)
 from app.interfaces.http.v2.schemas import AnalyzeAutoV2Request
 
 
