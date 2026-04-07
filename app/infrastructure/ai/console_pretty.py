@@ -82,7 +82,7 @@ def print_ia_request_block(
     sep = "=" * 78
     # Simbolos simples compatibles con consolas Windows
     print(f"\n{sep}", file=sys.stdout, flush=True)
-    print(f"  >> SOLICITUD IA", file=sys.stdout, flush=True)
+    print("  >> SOLICITUD IA", file=sys.stdout, flush=True)
     print(f"     modelo ........: {model}", file=sys.stdout, flush=True)
     print(f"     max_tokens ....: {max_tokens}", file=sys.stdout, flush=True)
     print(f"     temperature ...: {temperature}", file=sys.stdout, flush=True)
@@ -106,7 +106,7 @@ def print_ia_response_block(*, model: str, body: str) -> None:
         return
     sep = "=" * 78
     print(f"\n{sep}", file=sys.stdout, flush=True)
-    print(f"  << RESPUESTA IA", file=sys.stdout, flush=True)
+    print("  << RESPUESTA IA", file=sys.stdout, flush=True)
     print(f"     modelo .......: {model}", file=sys.stdout, flush=True)
     print(f"     caracteres ...: {len(body)}", file=sys.stdout, flush=True)
     print(sep, file=sys.stdout, flush=True)
