@@ -1,0 +1,11 @@
+README.md
+pyproject.toml
+app/__init__.py
+app/config.py
+app/logging_utils.py
+app/main.py
+recu_svp_nuevo.egg-info/PKG-INFO
+recu_svp_nuevo.egg-info/SOURCES.txt
+recu_svp_nuevo.egg-info/dependency_links.txt
+recu_svp_nuevo.egg-info/requires.txt
+recu_svp_nuevo.egg-info/top_level.txt

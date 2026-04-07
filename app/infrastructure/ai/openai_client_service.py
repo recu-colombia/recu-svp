@@ -82,7 +82,7 @@ class OpenAIClientService:
                     logger.debug("[IA] response_preview %s", preview_for_log(body, max_len=2800))
                 else:
                     logger.info("[IA] response_preview %s", preview_for_log(body, max_len=2800))
-                return content
+                return None if content is None else str(content)
             logger.warning("[IA] response_empty_choices model=%s", model_clean)
             return None
         except Exception:

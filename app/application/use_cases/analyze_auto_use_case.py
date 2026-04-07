@@ -165,7 +165,7 @@ class AnalyzeAutoUseCase:
 
         choice_by_span = {c.span_index: c for c in p2}
         actuaciones: list[ActuacionGeneradaDTO] = []
-        sin_clasificar: list[dict[str, str | int | float]] = []
+        sin_clasificar: list[dict[str, str | int | float | None]] = []
         errores: list[str] = []
         ci_flags_cache: dict[int, ComplementoDirectoCiFlags] = {}
 
