@@ -9,7 +9,7 @@ from app.application.services.antecedent_resolver import AntecedentResolver
 from app.application.services.concatenation_engine import ConcatenationEngine
 from app.application.services.rule_resolver import RuleResolver
 from app.application.use_cases.analyze_auto_use_case import AnalyzeAutoUseCase
-from app.domain.models import AllowedTriple, RuleMatch, SubjectDocumentPair
+from app.domain.models import AllowedTriple, ComplementoDirectoCiFlags, RuleMatch, SubjectDocumentPair
 from app.interfaces.http.v2.schemas import AnalyzeAutoV2Request
 
 
@@ -58,6 +58,15 @@ class EmptyCatalogRepository:
     ) -> list[AllowedTriple]:  # noqa: ARG002
         return []
 
+    def get_complemento_directo_ci_flags(
+        self, id_complemento_directo: int
+    ) -> ComplementoDirectoCiFlags:
+        _ = id_complemento_directo
+        return ComplementoDirectoCiFlags(
+            permite_texto_abierto_complemento_indirecto=False,
+            conector_id=None,
+        )
+
 
 class StubCatalogRepository:
     def list_subject_document_pairs(self) -> list[SubjectDocumentPair]:
@@ -83,6 +92,15 @@ class StubCatalogRepository:
                 complemento_nombre="notificar",
             )
         ]
+
+    def get_complemento_directo_ci_flags(
+        self, id_complemento_directo: int
+    ) -> ComplementoDirectoCiFlags:
+        _ = id_complemento_directo
+        return ComplementoDirectoCiFlags(
+            permite_texto_abierto_complemento_indirecto=False,
+            conector_id=None,
+        )
 
 
 class InvalidP1LanguageModel:
