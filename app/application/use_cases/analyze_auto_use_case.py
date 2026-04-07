@@ -362,9 +362,7 @@ class AnalyzeAutoUseCase:
             return ci_text, False
         if id_complemento_directo not in ci_flags_cache:
             ci_flags_cache[id_complemento_directo] = (
-                self._catalog_repository.get_complemento_directo_ci_flags(
-                    id_complemento_directo
-                )
+                self._catalog_repository.get_complemento_directo_ci_flags(id_complemento_directo)
             )
         if not ci_flags_cache[id_complemento_directo].permite_texto_abierto_complemento_indirecto:
             return ci_text, False

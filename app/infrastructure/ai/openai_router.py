@@ -235,9 +235,7 @@ class OpenAILanguageModelRouter(LanguageModel):
                 reason="no_candidates",
             )
 
-        compact_candidates = [
-            _antecedent_candidate_payload(i, c) for i, c in enumerate(candidates)
-        ]
+        compact_candidates = [_antecedent_candidate_payload(i, c) for i, c in enumerate(candidates)]
         messages = [
             {"role": "system", "content": SELECTION_SYSTEM_PROMPT},
             {

@@ -33,8 +33,7 @@ class PostgresRuleRepository(RuleRepository):
         verbo_id: int | None,
         complemento_directo_id: int | None,
     ) -> list[RuleMatch]:
-        query = text(
-            f"""
+        query = text(f"""
             SELECT
               rg.id AS id,
               COALESCE(pc.codigo, 'DEFAULT') AS pattern_code,
@@ -62,8 +61,7 @@ class PostgresRuleRepository(RuleRepository):
               )
             ORDER BY rg.prioridad ASC, rg.id ASC
             LIMIT 25
-            """
-        )
+            """)
         with self._engine.connect() as conn:
             try:
                 rows = list(
@@ -166,9 +164,7 @@ class PostgresActuacionRepository(ActuacionRepository):
         ]
 
         if reference_date is not None:
-            where_parts.append(
-                "(a.fecha_ocurrencia IS NULL OR a.fecha_ocurrencia <= :ref_date)"
-            )
+            where_parts.append("(a.fecha_ocurrencia IS NULL OR a.fecha_ocurrencia <= :ref_date)")
             params["ref_date"] = reference_date
 
         if rule.id_buscar_antecedente_verbo:
@@ -182,8 +178,7 @@ class PostgresActuacionRepository(ActuacionRepository):
         if rule.id_buscar_antecedente_complemento_directo:
             cd_id = rule.id_buscar_antecedente_complemento_directo
             params["cd_buscar_id"] = cd_id
-            where_parts.append(
-                f"""
+            where_parts.append(f"""
                 (
                   a.id_complemento_directo = :cd_buscar_id
                   OR EXISTS (
@@ -197,24 +192,20 @@ class PostgresActuacionRepository(ActuacionRepository):
                       )
                   )
                 )
-                """
-            )
+                """)
 
         if rule.buscar_antecedente_por_complemento_texto:
             raw = rule.buscar_antecedente_por_complemento_texto.strip()
             params["pct_sub"] = f"%{raw}%"
-            where_parts.append(
-                """
+            where_parts.append("""
                 (
                   COALESCE(a.complemento_directo, '') ILIKE :pct_sub
                   OR COALESCE(a.complemento_indirecto, '') ILIKE :pct_sub
                 )
-                """
-            )
+                """)
 
         where_sql = " AND ".join(where_parts)
-        query = text(
-            f"""
+        query = text(f"""
             SELECT
               a.id,
               a.fecha_ocurrencia,
@@ -231,8 +222,7 @@ class PostgresActuacionRepository(ActuacionRepository):
             WHERE {where_sql}
             ORDER BY a.id DESC
             LIMIT :fetch_limit
-            """
-        )
+            """)
 
         with self._engine.connect() as conn:
             try:
@@ -274,8 +264,7 @@ class PostgresCatalogRepository(CatalogRepository):
         self._schema = get_settings().db_schema
 
     def list_subject_document_pairs(self) -> list[SubjectDocumentPair]:
-        query = text(
-            f"""
+        query = text(f"""
             SELECT
               ts.id AS id_sujeto,
               td.id AS id_tipo_documento,
@@ -287,8 +276,7 @@ class PostgresCatalogRepository(CatalogRepository):
             JOIN {self._schema}.tipos_documentos td
               ON td.id = rsd.id_tipo_documento AND td.activo = TRUE
             ORDER BY ts.id, td.id
-            """
-        )
+            """)
         with self._engine.connect() as conn:
             try:
                 rows = list(conn.execute(query).mappings())
@@ -306,8 +294,7 @@ class PostgresCatalogRepository(CatalogRepository):
         ]
 
     def list_allowed_triples(self, *, id_tipo_documento: int) -> list[AllowedTriple]:
-        query = text(
-            f"""
+        query = text(f"""
             SELECT DISTINCT
               rdv.id_tipo_verbo AS id_verbo,
               rvc.id_complemento AS id_complemento_directo,
@@ -322,8 +309,7 @@ class PostgresCatalogRepository(CatalogRepository):
               ON tcd.id = rvc.id_complemento
             WHERE rdv.id_tipo_documento = :tid
             ORDER BY id_verbo, id_complemento_directo
-            """
-        )
+            """)
         with self._engine.connect() as conn:
             try:
                 rows = list(conn.execute(query, {"tid": id_tipo_documento}).mappings())
@@ -350,13 +336,11 @@ class PostgresCatalogRepository(CatalogRepository):
             )
         # Solo la columna usada por el merge CI; `conector_id` no está en todos los esquemas
         # desplegados (recu-terminos/grammar_engine sí la consulta en instalaciones nuevas).
-        query = text(
-            f"""
+        query = text(f"""
             SELECT tcd.permite_texto_abierto_complemento_indirecto
             FROM {self._schema}.tipos_complementos_directos tcd
             WHERE tcd.id = :cid
-            """
-        )
+            """)
         with self._engine.connect() as conn:
             try:
                 row = conn.execute(query, {"cid": id_complemento_directo}).mappings().first()
