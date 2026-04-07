@@ -17,7 +17,7 @@ Microservicio SVP v2 para analizar autos, resolver reglas de concatenacion sobre
    - `python -m pip install -e .[dev]`
 3. Copiar `.env.example` a `.env` y ajustar valores.
 4. Ejecutar:
-   - `uvicorn app.main:app --reload --port 8010`
+   - `uvicorn app.main:app --reload --port 8002`
 
 ## Variables OpenAI (estilo legacy)
 

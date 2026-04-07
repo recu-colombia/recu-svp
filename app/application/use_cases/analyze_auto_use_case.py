@@ -7,10 +7,18 @@ from app.application.ports.repositories import CatalogRepository
 from app.application.services.antecedent_resolver import AntecedentResolver
 from app.application.services.concatenation_engine import ConcatenationEngine
 from app.application.services.rule_resolver import RuleResolver
-from app.domain.models import AllowedTriple, GeneratedActuation, RuleMatch, SubjectDocumentPair
+from app.domain.models import (
+    AllowedTriple,
+    ComplementoDirectoCiFlags,
+    GeneratedActuation,
+    RuleMatch,
+    SubjectDocumentPair,
+)
 from app.interfaces.http.v2.schemas import ActuacionGeneradaDTO, AnalyzeAutoV2Request, AnalyzeAutoV2Response
 
 logger = logging.getLogger(__name__)
+
+_MAX_CI_TEXTO_FROM_SPAN_CHARS = 2000
 
 
 class AnalyzeAutoUseCase:
@@ -23,6 +31,7 @@ class AnalyzeAutoUseCase:
         rule_resolver: RuleResolver,
         antecedent_resolver: AntecedentResolver,
         concatenation_engine: ConcatenationEngine,
+        ci_texto_abierto_desde_span: bool = True,
     ) -> None:
         self._document_extractor = document_extractor
         self._language_model = language_model
@@ -30,6 +39,7 @@ class AnalyzeAutoUseCase:
         self._rule_resolver = rule_resolver
         self._antecedent_resolver = antecedent_resolver
         self._concatenation_engine = concatenation_engine
+        self._ci_texto_abierto_desde_span = ci_texto_abierto_desde_span
 
     async def execute(self, request: AnalyzeAutoV2Request) -> AnalyzeAutoV2Response:
         logger.info(
@@ -144,6 +154,7 @@ class AnalyzeAutoUseCase:
         actuaciones: list[ActuacionGeneradaDTO] = []
         sin_clasificar: list[dict[str, str | int | float]] = []
         errores: list[str] = []
+        ci_flags_cache: dict[int, ComplementoDirectoCiFlags] = {}
 
         for span in p1.actuacion_spans:
             choice = choice_by_span.get(span.span_index)
@@ -228,6 +239,14 @@ class AnalyzeAutoUseCase:
                     selected_option=selected,
                     complemento_directo_id_actual=triple.id_complemento_directo,
                 )
+
+            ci_text, ci_rellenado_desde_span = self._apply_span_ci_if_allowed(
+                ci_text=ci_text,
+                span_texto_literal=span.texto_literal,
+                id_complemento_directo=triple.id_complemento_directo,
+                ci_flags_cache=ci_flags_cache,
+            )
+
             texto_final = self._build_texto_final_svp(
                 sujeto_nombre=selected_pair.sujeto_nombre,
                 tipo_documento_nombre=selected_pair.tipo_documento_nombre,
@@ -255,6 +274,7 @@ class AnalyzeAutoUseCase:
                 "antecedente_search_skipped": antecedente_search_skipped if top_rule else False,
                 "filtro_fecha_aplicado": request.fecha_ocurrencia_referencia is not None,
                 "candidatos_truncados": truncated_flag if top_rule else False,
+                "ci_rellenado_desde_span": ci_rellenado_desde_span,
             }
 
             generated = GeneratedActuation(
@@ -301,6 +321,42 @@ class AnalyzeAutoUseCase:
             errores=errores,
             sin_clasificar=sin_clasificar,
         )
+
+    def _apply_span_ci_if_allowed(
+        self,
+        *,
+        ci_text: str,
+        span_texto_literal: str,
+        id_complemento_directo: int,
+        ci_flags_cache: dict[int, ComplementoDirectoCiFlags],
+    ) -> tuple[str, bool]:
+        """
+        Si el catálogo permite CI abierto y el motor dejó CI vacío, usa el extracto del span.
+        No sustituye ni concatena si ya hubo fragmento de encadenamiento.
+        """
+        if not self._ci_texto_abierto_desde_span:
+            return ci_text, False
+        if (ci_text or "").strip():
+            return ci_text, False
+        if id_complemento_directo not in ci_flags_cache:
+            ci_flags_cache[id_complemento_directo] = self._catalog_repository.get_complemento_directo_ci_flags(
+                id_complemento_directo
+            )
+        if not ci_flags_cache[id_complemento_directo].permite_texto_abierto_complemento_indirecto:
+            return ci_text, False
+        excerpt = self._span_excerpt_for_ci(span_texto_literal)
+        if not excerpt:
+            return ci_text, False
+        return excerpt, True
+
+    @staticmethod
+    def _span_excerpt_for_ci(span_texto_literal: str) -> str:
+        raw = (span_texto_literal or "").strip()
+        if not raw:
+            return ""
+        if len(raw) > _MAX_CI_TEXTO_FROM_SPAN_CHARS:
+            return raw[:_MAX_CI_TEXTO_FROM_SPAN_CHARS].rstrip()
+        return raw
 
     @staticmethod
     def _antecedent_search_defined(rule: RuleMatch) -> bool:

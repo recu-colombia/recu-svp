@@ -6,7 +6,13 @@ from sqlalchemy.engine import Engine
 
 from app.application.ports.repositories import ActuacionRepository, CatalogRepository, RuleRepository
 from app.config import get_settings
-from app.domain.models import AllowedTriple, AntecedentOption, RuleMatch, SubjectDocumentPair
+from app.domain.models import (
+    AllowedTriple,
+    AntecedentOption,
+    ComplementoDirectoCiFlags,
+    RuleMatch,
+    SubjectDocumentPair,
+)
 
 logger = logging.getLogger(__name__)
 
@@ -329,3 +335,35 @@ class PostgresCatalogRepository(CatalogRepository):
             )
             for i, row in enumerate(rows)
         ]
+
+    def get_complemento_directo_ci_flags(self, id_complemento_directo: int) -> ComplementoDirectoCiFlags:
+        if id_complemento_directo is None or id_complemento_directo < 0:
+            return ComplementoDirectoCiFlags(permite_texto_abierto_complemento_indirecto=False, conector_id=None)
+        # Solo la columna usada por el merge CI; `conector_id` no está en todos los esquemas
+        # desplegados (recu-terminos/grammar_engine sí la consulta en instalaciones nuevas).
+        query = text(
+            f"""
+            SELECT tcd.permite_texto_abierto_complemento_indirecto
+            FROM {self._schema}.tipos_complementos_directos tcd
+            WHERE tcd.id = :cid
+            """
+        )
+        with self._engine.connect() as conn:
+            try:
+                row = conn.execute(query, {"cid": id_complemento_directo}).mappings().first()
+            except Exception:
+                logger.exception(
+                    "Error consultando flags CI abierto para id_complemento_directo=%s",
+                    id_complemento_directo,
+                )
+                return ComplementoDirectoCiFlags(
+                    permite_texto_abierto_complemento_indirecto=False,
+                    conector_id=None,
+                )
+        if not row:
+            return ComplementoDirectoCiFlags(permite_texto_abierto_complemento_indirecto=False, conector_id=None)
+        permite = bool(row.get("permite_texto_abierto_complemento_indirecto", False))
+        return ComplementoDirectoCiFlags(
+            permite_texto_abierto_complemento_indirecto=permite,
+            conector_id=None,
+        )

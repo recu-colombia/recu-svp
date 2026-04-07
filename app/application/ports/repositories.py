@@ -1,7 +1,13 @@
 from datetime import date
 from typing import Protocol
 
-from app.domain.models import AllowedTriple, AntecedentOption, RuleMatch, SubjectDocumentPair
+from app.domain.models import (
+    AllowedTriple,
+    AntecedentOption,
+    ComplementoDirectoCiFlags,
+    RuleMatch,
+    SubjectDocumentPair,
+)
 
 
 class RuleRepository(Protocol):
@@ -32,3 +38,7 @@ class CatalogRepository(Protocol):
     def list_subject_document_pairs(self) -> list[SubjectDocumentPair]: ...
 
     def list_allowed_triples(self, *, id_tipo_documento: int) -> list[AllowedTriple]: ...
+
+    def get_complemento_directo_ci_flags(
+        self, id_complemento_directo: int
+    ) -> ComplementoDirectoCiFlags: ...

@@ -3,6 +3,7 @@ from app.application.services.concatenation_engine import ConcatenationEngine
 from app.application.services.pattern_fragment_builder import PatternFragmentBuilder
 from app.application.services.rule_resolver import RuleResolver
 from app.application.use_cases.analyze_auto_use_case import AnalyzeAutoUseCase
+from app.config import get_settings
 from app.infrastructure.ai.openai_router import OpenAILanguageModelRouter
 from app.infrastructure.db.repositories import (
     PostgresActuacionRepository,
@@ -26,4 +27,5 @@ def build_analyze_auto_use_case() -> AnalyzeAutoUseCase:
         rule_resolver=RuleResolver(rule_repository),
         antecedent_resolver=AntecedentResolver(actuacion_repository),
         concatenation_engine=ConcatenationEngine(pattern_builder=PatternFragmentBuilder()),
+        ci_texto_abierto_desde_span=get_settings().svp_ci_texto_abierto_desde_span,
     )

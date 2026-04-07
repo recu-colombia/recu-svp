@@ -14,6 +14,14 @@ class SubjectDocumentPair:
 
 
 @dataclass(frozen=True)
+class ComplementoDirectoCiFlags:
+    """Flags de catálogo para texto libre en complemento indirecto (paridad con grammar_engine)."""
+
+    permite_texto_abierto_complemento_indirecto: bool
+    conector_id: int | None = None
+
+
+@dataclass(frozen=True)
 class AllowedTriple:
     """Combinación cerrada (verbo, complemento_directo) válida para un tipo de documento."""
 

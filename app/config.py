@@ -41,6 +41,14 @@ class Settings(BaseSettings):
         description="Tabla cualificada de actuaciones en recu-judicial.",
     )
 
+    svp_ci_texto_abierto_desde_span: bool = Field(
+        default=True,
+        description=(
+            "Si es true, rellena complemento_indirecto_text desde el span cuando el catálogo "
+            "permite CI abierto y el motor de encadenamiento dejó CI vacío."
+        ),
+    )
+
     # Bloques JSON indentados en consola (ademas del logger)
     ia_console_pretty: bool = Field(default=True)
 
