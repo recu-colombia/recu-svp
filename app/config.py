@@ -39,6 +39,8 @@ class Settings(BaseSettings):
     database_password: Optional[str] = None
     db_password: Optional[str] = None
     db_schema: str = Field(default="svp")
+    # Schema de tablas judiciales (actuacion). ``public`` hoy; ``judicial`` en recu-data-db.
+    judicial_db_schema: str = Field(default="public", alias="JUDICIAL_DB_SCHEMA")
 
     openai_api_key: str = Field(default="")
     openai_base_url: str | None = Field(default=None)
@@ -57,8 +59,8 @@ class Settings(BaseSettings):
         description="Tope de filas candidatas a antecedente (public.actuacion).",
     )
     judicial_actuacion_table: str = Field(
-        default="public.actuacion",
-        description="Tabla cualificada de actuaciones en recu-judicial.",
+        default="",
+        description="Tabla cualificada de actuaciones (vacío = {JUDICIAL_DB_SCHEMA}.actuacion).",
     )
 
     svp_ci_texto_abierto_desde_span: bool = Field(
@@ -86,6 +88,10 @@ class Settings(BaseSettings):
             object.__setattr__(self, "database_user", self.db_user)
         if not self.database_password and self.db_password:
             object.__setattr__(self, "database_password", self.db_password)
+
+        if not (self.judicial_actuacion_table or "").strip():
+            schema = (self.judicial_db_schema or "public").strip() or "public"
+            object.__setattr__(self, "judicial_actuacion_table", f"{schema}.actuacion")
 
         url_complete = bool(self.database_url and "@" in self.database_url)
         if not url_complete:

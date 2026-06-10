@@ -7,12 +7,14 @@ from app.config import get_settings
 def create_db_engine() -> Engine:
     settings = get_settings()
     try:
+        search_path = f"{settings.db_schema},{settings.judicial_db_schema},public"
         return create_engine(
             settings.sqlalchemy_database_uri,
             pool_pre_ping=True,
             pool_size=settings.db_pool_size,
             max_overflow=settings.db_max_overflow,
             echo=False,
+            connect_args={"options": f"-csearch_path={search_path}"},
         )
     except ModuleNotFoundError:
         return create_engine("sqlite+pysqlite:///:memory:")
