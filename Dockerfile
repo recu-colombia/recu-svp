@@ -1,22 +1,33 @@
-FROM python:3.13-slim
+FROM python:3.13-slim-bookworm AS builder
 
-WORKDIR /app
+ENV PIP_NO_CACHE_DIR=1 \
+    PIP_DISABLE_PIP_VERSION_CHECK=1
+
+RUN apt-get update && apt-get install -y --no-install-recommends \
+        build-essential \
+        libpq-dev \
+    && rm -rf /var/lib/apt/lists/*
+
+WORKDIR /build
+COPY pyproject.toml .
+COPY app ./app
+RUN python -m pip install --upgrade pip && \
+    python -m pip install --prefix=/install --no-cache-dir .
+
+FROM python:3.13-slim-bookworm AS runtime
 
 ENV PYTHONUNBUFFERED=1 \
     PYTHONDONTWRITEBYTECODE=1
 
-# Cliente PostgreSQL en runtime (psycopg2-binary)
 RUN apt-get update && apt-get install -y --no-install-recommends \
-    libpq5 \
+        libpq5 \
     && rm -rf /var/lib/apt/lists/*
 
+COPY --from=builder /install /usr/local
+
+WORKDIR /app
 COPY pyproject.toml .
 COPY app ./app
 
-RUN pip install --no-cache-dir --upgrade pip && \
-    pip install --no-cache-dir .
-
 EXPOSE 8010
-
-# Cloud Run inyecta PORT; local puede usar APP_PORT vía .env si se monta
 CMD ["sh", "-c", "exec uvicorn app.main:app --host 0.0.0.0 --port ${PORT:-8010}"]
